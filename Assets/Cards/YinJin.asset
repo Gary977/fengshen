@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 839ec8d6c78a16d488f56cf80dcf7f56, type: 3}
+  m_Name: YinJin
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: 8
+  cardSprite: {fileID: -6266214783646302326, guid: c5a49c02574cd184ebd91aa751b368df, type: 3}
+  cardName: Refine
+  element: 3
+  polarity: 0
+  cost: 2
+  type: 3
+  description: 'Choose 1 card in your hand; it costs 1 less energy this battle (minimum
+    0).
+
+    If the chosen card is Metal, it costs 2 less instead.'
+  baseDamage: 0
+  bonusDamage: 0
+  elementBonus: 0.25
+  heal: 0
+  baseBlock: 0
+  conditionalBlock: 0
+  burnTick: 0
+  burnTurns: 0
+  reducePerHit: 0
+  hitCount: 0

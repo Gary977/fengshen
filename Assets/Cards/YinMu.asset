@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 839ec8d6c78a16d488f56cf80dcf7f56, type: 3}
+  m_Name: YinMu
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: 2
+  cardSprite: {fileID: -4279201844541108399, guid: ccd7a3f655763934e80cc6940d635675, type: 3}
+  cardName: Spirit Mend
+  element: 0
+  polarity: 0
+  cost: 2
+  type: 2
+  description: 'Restore 5 HP.
+
+    If you have any debuffs, remove one and increase
+    healing by +100%.'
+  baseDamage: 0
+  bonusDamage: 0
+  elementBonus: 0.25
+  heal: 5
+  baseBlock: 0
+  conditionalBlock: 0
+  burnTick: 0
+  burnTurns: 0
+  reducePerHit: 0
+  hitCount: 0
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0
+  HpMultiplier: 2

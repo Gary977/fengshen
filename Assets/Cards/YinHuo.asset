@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 839ec8d6c78a16d488f56cf80dcf7f56, type: 3}
+  m_Name: YinHuo
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: 4
+  cardSprite: {fileID: -347405832910566999, guid: b9366d21f6f8d604ab03452bebf33d5d, type: 3}
+  cardName: Scorch Mark
+  element: 1
+  polarity: 0
+  cost: 3
+  type: 6
+  description: 'Deal 10 damage.
+
+    Apply Burn (2 turns, -5 HP/turn).
+
+'
+  baseDamage: 15
+  bonusDamage: 0
+  elementBonus: 0.25
+  heal: 0
+  baseBlock: 0
+  conditionalBlock: 0
+  burnTick: 6
+  burnTurns: 2
+  reducePerHit: 0
+  hitCount: 0

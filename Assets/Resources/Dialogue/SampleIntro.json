@@ -1,0 +1,234 @@
+{
+    "sceneId": "SampleIntro",
+    "slides": [
+        {
+            "bg": "1",
+            "dialogue": [
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "…Wake up. A thousand years you’ve been lying in the belly of Xuanyuan’s tomb, with every storm, every crack of thunder pressing down on your skull. Don’t you think it’s time you were put to use?",
+                    "sfx": "wind_soft",
+                    "voice": "",
+                    "bgm": "calm_intro"
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Do you hear it? The Investiture scroll has turned a new page. There’s a name missing—a clever, ruthless soul, born with a taste for disaster.Someone like you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "I’ll ask you plainly. Do you want to live? No, do you want to… ascend?",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "The seams of heaven and earth are splitting open. Blood from the feudal lords runs thick like mud. And you—all it takes is a single nod, and I’ll let you climb on their shadows all the way up.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Tell me. From this night on… will you walk this path for me?",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                }
+            ],
+            "choices": [
+                {
+                    "id": "s1_c1_yes",
+                    "text": "Yes"
+                },
+                {
+                    "id": "s1_c1_no",
+                    "text": "No"
+                }
+            ]
+        },
+        {
+            "bg": "2",
+            "dialogue": [
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Good… you woke up faster than I expected.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Don’t move yet.\nRight now, you’re too fragile—light enough to scatter with a breath of wind.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Listen carefully. The real daughter of the Su family—tomorrow at dawn, she’ll be carried into the royal palace of Zhaoge.The decree is sealed. She is to become the newly appointed concubine.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Her body is lying in the inner courtyard of the Su residence. The servants think she simply fell ill. That body is prepared for you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "All you need to do is walk in… slip into it like a new skin. After that— you’ll enter the palace using her name, her face, her scent.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "The people inside the palace are hopelessly blind. As long as you follow their gaze, follow their ignorance, the whole kingdom will soften like wet clay,ready for you to shape however you wish.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "You only need to do one thing. Let them doubt each other, tear at each other… \nAs for how to do it, I’ll teach you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                }
+            ],
+            "choices": []
+        },
+        {
+            "bg": "3",
+            "dialogue": [
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Get up.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Go reclaim your skin.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Start from the Su residence, the door of fate is already open for you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                }
+            ],
+            "choices": []
+        },
+        {
+            "bg": "4",
+            "dialogue": [
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Get up.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Go reclaim your skin.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Start from the Su residence, the door of fate is already open for you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                }
+            ],
+            "choices": []
+        },
+        {
+            "bg": "5",
+            "dialogue": [
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "You’ve arrived. This is the Su residence.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Go on. She’s waiting for you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                }
+            ],
+            "choices": []
+        },
+        {
+            "bg": "6",
+            "dialogue": [
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Slow your breath. There… ahead of you.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "A guard! He’s already sensed something.",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                },
+                {
+                    "speaker": "Unknown",
+                    "portrait": "",
+                    "text": "Take him down!",
+                    "sfx": "",
+                    "voice": "",
+                    "bgm": ""
+                }
+            ],
+            "choices": []
+        }
+    ]
+}

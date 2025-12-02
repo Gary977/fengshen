@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 839ec8d6c78a16d488f56cf80dcf7f56, type: 3}
+  m_Name: YangTu
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: 5
+  cardSprite: {fileID: 1668455962959749438, guid: 7de32e37346b4c74bb5885da102f85c2, type: 3}
+  cardName: Rock Bulwark
+  element: 2
+  polarity: 1
+  cost: 2
+  type: 1
+  description: Gain 10 Block.
+  baseDamage: 0
+  bonusDamage: 0
+  elementBonus: 0.25
+  heal: 0
+  baseBlock: 10
+  conditionalBlock: 5
+  burnTick: 0
+  burnTurns: 0
+  reducePerHit: 0
+  hitCount: 0
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0

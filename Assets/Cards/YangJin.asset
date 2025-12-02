@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 839ec8d6c78a16d488f56cf80dcf7f56, type: 3}
+  m_Name: YangJin
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: 7
+  cardSprite: {fileID: -3887586376655913587, guid: 94220cd9efc3df04397e4065fc9f8a8b, type: 3}
+  cardName: Gilded Edge
+  element: 3
+  polarity: 1
+  cost: 3
+  type: 0
+  description: 'Deal 12 damage.
+
+    If you currently have Block, deal +6 additional
+    damage.
+
+'
+  baseDamage: 12
+  bonusDamage: 6
+  elementBonus: 0.25
+  heal: 0
+  baseBlock: 0
+  conditionalBlock: 0
+  burnTick: 0
+  burnTurns: 0
+  reducePerHit: 0
+  hitCount: 0
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0

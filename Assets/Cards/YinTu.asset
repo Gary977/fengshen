@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 839ec8d6c78a16d488f56cf80dcf7f56, type: 3}
+  m_Name: YinTu
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: 6
+  cardSprite: {fileID: 4532370332454661765, guid: 5e54f93582cea8846b02a8d6ac5b9496, type: 3}
+  cardName: Earthen Seal
+  element: 2
+  polarity: 0
+  cost: 2
+  type: 1
+  description: "Apply Weak (1 turn), reducing enemy attack by 25%.\r\nReduce the
+    target\u2019s Block by 5."
+  baseDamage: 0
+  bonusDamage: 0
+  elementBonus: 0.25
+  heal: 0
+  baseBlock: 0
+  conditionalBlock: 5
+  burnTick: 0
+  burnTurns: 0
+  reducePerHit: 0
+  hitCount: 0
+  wetTurns: 0
+  weakTurns: 1
+  vulnerableTurns: 0
