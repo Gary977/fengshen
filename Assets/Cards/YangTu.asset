@@ -13,13 +13,15 @@ MonoBehaviour:
   m_Name: YangTu
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 5
-  cardSprite: {fileID: 1668455962959749438, guid: 7de32e37346b4c74bb5885da102f85c2, type: 3}
+  cardSprite: {fileID: 5826410909707381162, guid: 63ee263d2c6439e4d9021f319ebdc37a, type: 3}
   cardName: Rock Bulwark
   element: 2
   polarity: 1
   cost: 2
   type: 1
-  description: Gain 10 Block.
+  description: 'Rock Bulwark
+
+    Gain 10 Block.'
   baseDamage: 0
   bonusDamage: 0
   elementBonus: 0.25
@@ -33,3 +35,4 @@ MonoBehaviour:
   wetTurns: 0
   weakTurns: 0
   vulnerableTurns: 0
+  HpMultiplier: 0

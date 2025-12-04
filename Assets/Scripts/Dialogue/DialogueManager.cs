@@ -5,6 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.Video;
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
@@ -16,19 +17,19 @@ public class DialogueManager : MonoBehaviour
     public float autoPlayDelay = 1.2f;
 
     [Header("Dialogue Source")]
-    [Tooltip("直接指定 JSON TextAsset；为空则按 fallbackDialogueId 从 Resources/Dialogue/ 中加载")]
+    [Tooltip("ç›´æŽ¥æŒ‡å®š JSON TextAssetï¼›ä¸ºç©ºåˆ™æŒ‰ fallbackDialogueId ä»Ž Resources/Dialogue/ ä¸­åŠ è½½")]
     public TextAsset dialogueAsset;
-    [Tooltip("当没有手动挂 TextAsset 时，依旧可以用旧方式输入 Resources 路径 ID")] 
+    [Tooltip("å½“æ²¡æœ‰æ‰‹åŠ¨æŒ‚ TextAsset æ—¶ï¼Œä¾æ—§å¯ä»¥ç”¨æ—§æ–¹å¼è¾“å…¥ Resources è·¯å¾„ ID")] 
     public string fallbackDialogueId;
-    [Tooltip("是否在 Start 时自动加载并播放上面配置的对话 JSON")]
+    [Tooltip("æ˜¯å¦åœ¨ Start æ—¶è‡ªåŠ¨åŠ è½½å¹¶æ’­æ”¾ä¸Šé¢é…ç½®çš„å¯¹è¯ JSON")]
     public bool playOnStart = false;
 
     [Header("Resources Lookup")]
-    [Tooltip("Resources 文件夹下的背景子目录，可为空代表直接使用 JSON 中的路径")]
+    [Tooltip("Resources æ–‡ä»¶å¤¹ä¸‹çš„èƒŒæ™¯å­ç›®å½•ï¼Œå¯ä¸ºç©ºä»£è¡¨ç›´æŽ¥ä½¿ç”¨ JSON ä¸­çš„è·¯å¾„")]
     public string backgroundFolder = "Backgrounds";
-    [Tooltip("Resources 文件夹下的立绘子目录，可为空代表直接使用 JSON 中的路径")]
+    [Tooltip("Resources æ–‡ä»¶å¤¹ä¸‹çš„ç«‹ç»˜å­ç›®å½•ï¼Œå¯ä¸ºç©ºä»£è¡¨ç›´æŽ¥ä½¿ç”¨ JSON ä¸­çš„è·¯å¾„")]
     public string portraitFolder = "Portraits";
-    [Tooltip("在找不到资源时是否打印警告日志，帮助排查路径问题")]
+    [Tooltip("åœ¨æ‰¾ä¸åˆ°èµ„æºæ—¶æ˜¯å¦æ‰“å°è­¦å‘Šæ—¥å¿—ï¼Œå¸®åŠ©æŽ’æŸ¥è·¯å¾„é—®é¢˜")]
     public bool logMissingAssets = true;
 
     private DialogueData data;
@@ -39,10 +40,12 @@ public class DialogueManager : MonoBehaviour
     private bool autoPlay = false;
     private bool paused = false;
     private bool historyBlocking = false;
+    private bool dialogueEnded = false;
+    private bool transitionBlocking = false;
     public static DialogueManager Instance { get; private set; }
     private void Awake()
     {
-        // 单例初始化
+        // å•ä¾‹åˆå§‹åŒ–
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -76,13 +79,13 @@ public class DialogueManager : MonoBehaviour
         if (paused) return;
 
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-        // 新输入系统：使用 Input System 的 Mouse
+        // æ–°è¾“å…¥ç³»ç»Ÿï¼šä½¿ç”¨ Input System çš„ Mouse
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             OnClickNext();
         }
 #else
-        // 旧输入系统或 Both 模式
+        // æ—§è¾“å…¥ç³»ç»Ÿæˆ– Both æ¨¡å¼
         if (Input.GetMouseButtonDown(0))
         {
             OnClickNext();
@@ -95,7 +98,7 @@ public class DialogueManager : MonoBehaviour
         TextAsset json = Resources.Load<TextAsset>("Dialogue/" + id);
         if (json == null)
         {
-            Debug.LogError($"未找到 Resources/Dialogue/{id} 对应的 JSON 文件");
+            Debug.LogError($"æœªæ‰¾åˆ° Resources/Dialogue/{id} å¯¹åº”çš„ JSON æ–‡ä»¶");
             return;
         }
 
@@ -107,7 +110,7 @@ public class DialogueManager : MonoBehaviour
     {
         if (asset == null)
         {
-            Debug.LogWarning("传入的 dialogue TextAsset 为空");
+            Debug.LogWarning("ä¼ å…¥çš„ dialogue TextAsset ä¸ºç©º");
             data = null;
             return;
         }
@@ -118,12 +121,12 @@ public class DialogueManager : MonoBehaviour
             data = JsonUtility.FromJson<DialogueData>(asset.text);
             if (data == null)
             {
-                Debug.LogError("对话 JSON 解析后为空，请检查格式");
+                Debug.LogError("å¯¹è¯ JSON è§£æžåŽä¸ºç©ºï¼Œè¯·æ£€æŸ¥æ ¼å¼");
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"解析对话 JSON 失败: {ex.Message}");
+            Debug.LogError($"è§£æžå¯¹è¯ JSON å¤±è´¥: {ex.Message}");
             data = null;
         }
     }
@@ -132,51 +135,75 @@ public class DialogueManager : MonoBehaviour
     {
         if (data == null)
         {
-            Debug.LogWarning("当前还没有加载任何对话 JSON，请先调用 LoadDialogue");
+            Debug.LogWarning("å½“å‰è¿˜æ²¡æœ‰åŠ è½½ä»»ä½•å¯¹è¯ JSONï¼Œè¯·å…ˆè°ƒç”¨ LoadDialogue");
             return;
         }
         if (ui == null)
         {
-            Debug.LogError("DialogueManager 未绑定 DialogueUI，无法开始对话");
+            Debug.LogError("DialogueManager æœªç»‘å®š DialogueUIï¼Œæ— æ³•å¼€å§‹å¯¹è¯");
             return;
         }
         slideIdx = 0;
         lineIdx = 0;
-        StartCoroutine(PlaySlide());
+        dialogueEnded = false;
+        transitionBlocking = false;
+        StartCoroutine(PlaySlide(skipVideoTransition: true));
     }
 
-    IEnumerator PlaySlide()
+    IEnumerator PlaySlide(bool skipVideoTransition = false)
     {
+        // load and play background video if present
         var slide = data.slides[slideIdx];
+        VideoClip bgVideo = LoadVideoFromFolder(backgroundFolder, slide.bg);
+        if (bgVideo != null)
+        {
+            ui.PlayVideoBackground(bgVideo, skipVideoTransition);
+        }
 
-        // 背景
-        Sprite bg = LoadSpriteFromFolder(backgroundFolder, slide.bg);
-        yield return StartCoroutine(ui.FadeBackground(bg));
+        transitionBlocking = !skipVideoTransition;
+        if (!skipVideoTransition)
+        {
+            while (ui != null && ui.IsVideoTransitioning)
+                yield return null;
+        }
 
-        // 第一条对白
+        transitionBlocking = false;
+        ui?.ShowDialoguePanel(true, clearContent: true);
         ShowLine();
     }
 
     void ShowLine()
     {
-        var line = data.slides[slideIdx].dialogue[lineIdx];
+        var slide = data.slides[slideIdx];
+        var line = slide.dialogue[lineIdx];
+        var autoBgmName = slide.bg; // BGM follows background, no line suffix
+        var autoLineAudioName = $"{slide.bg}_{lineIdx + 1}"; // SFX/Voice keep underscore + line index
 
         ui.SetSpeakerName(line.speaker);
 
-        // --- 音乐 / 音效 ---
-        if (DialogueAudio.Instance != null)
+        // --- Audio playback ---
+        var audio = DialogueAudio.Instance ?? EnsureDialogueAudio();
+        if (audio != null)
         {
-            if (!string.IsNullOrEmpty(line.bgm))
-                DialogueAudio.Instance.PlayBGM(line.bgm);
+            var bgmName = string.IsNullOrEmpty(line.bgm) ? autoBgmName : line.bgm;
+            var sfxName = string.IsNullOrEmpty(line.sfx) ? autoLineAudioName : line.sfx;
+            var voiceName = string.IsNullOrEmpty(line.voice) ? autoLineAudioName : line.voice;
 
-            if (!string.IsNullOrEmpty(line.sfx))
-                DialogueAudio.Instance.PlaySFX(line.sfx);
+            if (!string.IsNullOrEmpty(bgmName))
+                audio.PlayBGM(bgmName);
 
-            if (!string.IsNullOrEmpty(line.voice))
-                DialogueAudio.Instance.PlayVoice(line.voice);
+            if (!string.IsNullOrEmpty(sfxName))
+                audio.PlaySFX(sfxName);
+
+            if (!string.IsNullOrEmpty(voiceName))
+                audio.PlayVoice(voiceName);
+        }
+        else
+        {
+            Debug.LogWarning("[DialogueManager] DialogueAudio singleton missing; audio will not play.");
         }
 
-        // 立绘（简化处理：根据portrait字段判断左右，实际可以根据speaker判断）
+        // ç«‹ç»˜ï¼ˆç®€åŒ–å¤„ç†ï¼šæ ¹æ®portraitå­—æ®µåˆ¤æ–­å·¦å³ï¼Œå®žé™…å¯ä»¥æ ¹æ®speakeråˆ¤æ–­ï¼‰
         Sprite leftPortrait = null;
         Sprite rightPortrait = null;
         bool leftIsSpeaking = true;
@@ -203,7 +230,7 @@ public class DialogueManager : MonoBehaviour
             }
         }
 
-        // 更新立绘
+        // æ›´æ–°ç«‹ç»˜
         if (leftPortrait != null)
             StartCoroutine(ui.FadePortrait(true, leftPortrait, leftIsSpeaking));
         else
@@ -214,29 +241,27 @@ public class DialogueManager : MonoBehaviour
         else
             ui.HidePortrait(false);
         
-        // 更新立绘亮度状态
+        // æ›´æ–°ç«‹ç»˜äº®åº¦çŠ¶æ€
         ui.UpdatePortraitStates(leftIsSpeaking, !leftIsSpeaking);
 
-        // 历史记录
+        // åŽ†å²è®°å½•
         ui.AddHistory(line.speaker, line.text);
 
-        // 打字机
+        // æ‰“å­—æœº
         StartCoroutine(ui.TypeText(line.text));
     }
 
 
     public void OnClickNext()
     {
-        if (historyBlocking)
-            return;
-        if (IsPointerOverBlockingUI())
-            return;
+        if (historyBlocking) return;
+        if (ui != null && ui.IsVideoTransitioning) return;
+        if (transitionBlocking) return;
+        if (dialogueEnded || data == null || data.slides == null || data.slides.Count == 0) return;
+        if (slideIdx >= data.slides.Count) return;
+        if (IsPointerOverBlockingUI()) return;
+
         ui?.PlayClickSound();
-        if (data == null || data.slides == null || data.slides.Count == 0)
-        {
-            Debug.LogWarning("当前没有可播放的对话数据，请先在 Inspector 中挂载 JSON 并调用 LoadDialogue/StartDialogue");
-            return;
-        }
 
         if (ui.isTyping)
         {
@@ -249,24 +274,15 @@ public class DialogueManager : MonoBehaviour
 
         if (lineIdx >= slide.dialogue.Count)
         {
-            // 进入选项?
+            // è¿›å…¥é€‰é¡¹?
             if (slide.choices != null && slide.choices.Count > 0)
             {
                 ShowChoices();
                 return;
             }
 
-            // 下一张图
-            slideIdx++;
-            lineIdx = 0;
-
-            if (slideIdx >= data.slides.Count)
-            {
-                EndDialogue();
-                return;
-            }
-
-            StartCoroutine(PlaySlide());
+            // ä¸‹ä¸€å¼ å›¾
+            StartCoroutine(TransitionToNextSlide());
             return;
         }
 
@@ -288,25 +304,50 @@ public class DialogueManager : MonoBehaviour
         ui.HideChoices();
 
         // 下一张图
+        StartCoroutine(TransitionToNextSlide());
+    }
+
+    private IEnumerator TransitionToNextSlide()
+    {
+        ui?.ShowDialoguePanel(false, clearContent: true);
+        transitionBlocking = true;
+
+        var audio = DialogueAudio.Instance;
+        if (audio != null)
+        {
+            yield return StartCoroutine(audio.FadeOutAllCoroutine());
+        }
+
         slideIdx++;
         lineIdx = 0;
 
-        if (slideIdx >= data.slides.Count)
+        if (slideIdx >= data.slides.Count || dialogueEnded)
         {
             EndDialogue();
-            return;
+            yield break;
         }
 
-        StartCoroutine(PlaySlide());
+        yield return StartCoroutine(PlaySlide(skipVideoTransition: false));
+        transitionBlocking = false;
     }
     IEnumerator AutoPlayRoutine()
     {
+        var wait = new WaitForSeconds(autoPlayDelay);
         while (autoPlay)
         {
-            if (!ui.isTyping)
+            var audio = DialogueAudio.Instance ?? EnsureDialogueAudio();
+            bool voicePlaying = audio != null && audio.IsVoicePlaying();
+
+            if (!ui.isTyping && !voicePlaying)
             {
-                yield return new WaitForSeconds(autoPlayDelay);
-                OnClickNext();
+                yield return wait;
+                if (!autoPlay) yield break;
+
+                audio = DialogueAudio.Instance ?? EnsureDialogueAudio();
+                voicePlaying = audio != null && audio.IsVoicePlaying();
+
+                if (!ui.isTyping && !voicePlaying)
+                    OnClickNext();
             }
             yield return null;
         }
@@ -333,33 +374,71 @@ public class DialogueManager : MonoBehaviour
     }
 
 
-    void EndDialogue()
+        void EndDialogue()
     {
+        if (dialogueEnded) return;
+        dialogueEnded = true;
         Debug.Log("Dialogue ended");
-        // 当对话结束时切换到战斗场景
+        // ??"?_1?_???"??Y?-??^?????^??^~?--?o??T_
         SceneManager.LoadScene("BattleDemo");
     }
 
-    private Sprite LoadSpriteFromFolder(string folder, string resourceKey)
+private Sprite LoadSpriteFromFolder(string folder, string resourceKey, bool warn = true)
+{
+    if (string.IsNullOrEmpty(resourceKey)) return null;
+
+    string trimmedFolder = string.IsNullOrEmpty(folder) ? string.Empty : folder.TrimEnd('/', '\\');
+    string finalPath = string.IsNullOrEmpty(trimmedFolder) ? resourceKey : trimmedFolder + "/" + resourceKey;
+
+    Sprite sprite = Resources.Load<Sprite>(finalPath);
+    if (sprite == null)
+        sprite = Resources.Load<Sprite>(resourceKey);
+
+    if (sprite == null && warn && logMissingAssets)
+        Debug.LogWarning($"æœªèƒ½åœ¨ Resources ä¸­æ‰¾åˆ° Spriteï¼š{finalPath} (æˆ– {resourceKey})");
+
+    return sprite;
+}
+
+
+    private VideoClip LoadVideoFromFolder(string folder, string resourceKey)
     {
         if (string.IsNullOrEmpty(resourceKey)) return null;
 
         string trimmedFolder = string.IsNullOrEmpty(folder) ? string.Empty : folder.TrimEnd('/', '\\');
         string finalPath = string.IsNullOrEmpty(trimmedFolder) ? resourceKey : trimmedFolder + "/" + resourceKey;
 
-        Sprite sprite = Resources.Load<Sprite>(finalPath);
-        if (sprite == null)
+        VideoClip clip = Resources.Load<VideoClip>(finalPath);
+        if (clip == null)
         {
-            // 尝试直接使用原始 key，防止 JSON 已经写了完整路径
-            sprite = Resources.Load<Sprite>(resourceKey);
+            clip = Resources.Load<VideoClip>(resourceKey);
         }
 
-        if (sprite == null && logMissingAssets)
+        if (clip == null && logMissingAssets)
         {
-            Debug.LogWarning($"未能在 Resources 中找到 Sprite：{finalPath} (或 {resourceKey})");
+            Debug.LogWarning($"â€˜oÂ¦Å Å¸Â«â€ o\" Resources â€ž,-â€˜%_â€ ^Ã¸ VideoClipâ€¹Â¬s{finalPath} (â€˜^- {resourceKey})");
         }
 
-        return sprite;
+        return clip;
+    }
+
+    private DialogueAudio EnsureDialogueAudio()
+    {
+        if (DialogueAudio.Instance != null)
+            return DialogueAudio.Instance;
+
+#if UNITY_2023_1_OR_NEWER
+        var existing = Object.FindFirstObjectByType<DialogueAudio>();
+#else
+        var existing = Object.FindObjectOfType<DialogueAudio>();
+#endif
+        if (existing != null)
+            return existing;
+
+        var go = new GameObject("DialogueAudio_Auto");
+        var created = go.AddComponent<DialogueAudio>();
+        Debug.Log("[DialogueManager] Auto-created DialogueAudio in scene.");
+        return created;
     }
 
     private bool IsPointerOverBlockingUI()
@@ -404,4 +483,3 @@ public class DialogueManager : MonoBehaviour
         historyBlocking = shouldBlock;
     }
 }
-

@@ -1,9 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Video;
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
 using UnityEngine.InputSystem.UI;
 #endif
@@ -13,6 +14,12 @@ public class DialogueUI : MonoBehaviour
     [Header("Background Layer")]
     public Image bgImage;
     public CanvasGroup bgCanvasGroup;
+    [Tooltip("When set, videos render into this RawImage instead of the sprite BG.")]
+    public RawImage bgVideoImage;
+    [Tooltip("Optional VideoPlayer used for background videos.")]
+    public VideoPlayer bgVideoPlayer;
+    [Tooltip("RenderTexture size used when creating a target texture for video output.")]
+    public Vector2Int videoTextureSize = new Vector2Int(1920, 1080);
 
     [Header("Character Layer")]
     public Image leftPortrait;
@@ -51,29 +58,20 @@ public class DialogueUI : MonoBehaviour
     [Header("Audio")]
     [Tooltip("用于播放打字与点击音效的 AudioSource；为空时会自动创建")]
     public AudioSource uiAudioSource;
-    [Tooltip("用于播放打字音效的独立 AudioSource；为空时自动创建")]
-    public AudioSource typingAudioSource;
-    [Tooltip("打字机音效，默认尝试载入 Unity 内置 MenuHighlight 声音")]
-    public AudioClip typeSound;
     [Tooltip("点击音效，默认尝试载入 Unity 内置 MenuClick 声音")]
     public AudioClip clickSound;
     [Tooltip("按钮悬停音效，默认尝试载入 Unity 内置 MenuHighlight 声音")]
     public AudioClip hoverSound;
-    public float typeSoundInterval = 3f;
-    [Range(0f, 1f)] public float typeSoundVolume = 0.4f;
     [Range(0f, 1f)] public float clickSoundVolume = 0.6f;
     [Range(0f, 1f)] public float hoverSoundVolume = 0.45f;
-    [Range(0f, 2f)] public float typeSoundTailDelay = 0.2f;
 
     [HideInInspector] public bool isTyping = false;
     private bool skipTyping = false;
     private Coroutine typingCoroutine;
     private Coroutine indicatorCoroutine;
-    private float nextTypeSoundTime;
     private bool historyWarningIssued = false;
     private readonly List<string> historyEntries = new List<string>(64);
     private bool isWiringHistory;
-    private Coroutine typingSoundTailCoroutine;
 
     // 向后兼容的旧接口
     public Image background { get => bgImage; set => bgImage = value; }
@@ -82,6 +80,11 @@ public class DialogueUI : MonoBehaviour
     public CanvasGroup portraitCanvas { get => leftPortraitCanvasGroup; set => leftPortraitCanvasGroup = value; }
     public TextMeshProUGUI speakerName { get => nameTag; set => nameTag = value; }
     public GameObject choiceParent { get => choicePanel; set => choicePanel = value; }
+
+    private RenderTexture bgVideoTexture;
+    private Coroutine bgVideoCoroutine;
+    private Coroutine bgTransitionCoroutine;
+    public bool IsVideoTransitioning { get; private set; }
 
     private void Awake()
     {
@@ -106,6 +109,9 @@ public class DialogueUI : MonoBehaviour
         RegisterButtonAudio(skipButton, true);
         RegisterButtonAudio(autoButton, true);
         RegisterButtonAudio(historyButton, true);
+        EnsureButtonHoverAndClickEffects(skipButton);
+        EnsureButtonHoverAndClickEffects(autoButton);
+        EnsureButtonHoverAndClickEffects(historyButton);
     }
 
     /// <summary>
@@ -116,6 +122,8 @@ public class DialogueUI : MonoBehaviour
     {
         Assign(ref bgImage, "BackgroundLayer/BGImage");
         Assign(ref bgCanvasGroup, "BackgroundLayer/BGImage");
+        Assign(ref bgVideoImage, "BackgroundLayer/BGVideo");
+        Assign(ref bgVideoPlayer, "BackgroundLayer/BGVideo");
         Assign(ref leftPortrait, "CharacterLayer/LeftPortrait");
         Assign(ref leftPortraitCanvasGroup, "CharacterLayer/LeftPortrait");
         Assign(ref rightPortrait, "CharacterLayer/RightPortrait");
@@ -194,25 +202,197 @@ public class DialogueUI : MonoBehaviour
         }
     }
 
-    #region Background Methods
-    public IEnumerator FadeBackground(Sprite newBG)
+            #region Background Methods
+    public void PlayVideoBackground(VideoClip clip, bool skipTransition = false)
     {
-        if (bgImage == null)
-            yield break;
+        if (bgVideoPlayer == null || bgVideoImage == null)
+            return;
 
-        if (bgCanvasGroup == null)
+        if (bgTransitionCoroutine != null)
         {
-            bgCanvasGroup = bgImage.GetComponent<CanvasGroup>() ?? bgImage.gameObject.AddComponent<CanvasGroup>();
-            bgCanvasGroup.interactable = false;
-            bgCanvasGroup.blocksRaycasts = false;
+            StopCoroutine(bgTransitionCoroutine);
         }
 
-        bgImage.sprite = newBG;
-        bgImage.enabled = newBG != null;
-        bgCanvasGroup.alpha = newBG == null ? 0f : 1f;
-        yield break;
+        if (clip == null)
+        {
+            StopBackgroundVideo();
+            IsVideoTransitioning = false;
+            return;
+        }
+
+        if (skipTransition)
+        {
+            ConfigureVideoTarget(clip);
+            IsVideoTransitioning = false;
+            if (bgVideoCoroutine != null)
+            {
+                StopCoroutine(bgVideoCoroutine);
+                bgVideoCoroutine = null;
+            }
+            bgVideoCoroutine = StartCoroutine(PrepareAndPlayVideo());
+            // ensure visible color
+            bgVideoImage.color = Color.white;
+            return;
+        }
+
+        IsVideoTransitioning = true;
+        bgTransitionCoroutine = StartCoroutine(VideoTransitionRoutine(clip));
+    }
+
+    public void StopBackgroundVideo()
+    {
+        if (bgVideoCoroutine != null)
+        {
+            StopCoroutine(bgVideoCoroutine);
+            bgVideoCoroutine = null;
+        }
+
+        if (bgVideoPlayer != null)
+        {
+            bgVideoPlayer.Stop();
+            bgVideoPlayer.clip = null;
+            bgVideoPlayer.targetTexture = null;
+        }
+
+        if (bgVideoImage != null)
+        {
+            bgVideoImage.enabled = false;
+            bgVideoImage.texture = null;
+        }
+    }
+
+    private IEnumerator PrepareAndPlayVideo()
+    {
+        if (bgVideoPlayer == null || bgVideoPlayer.clip == null)
+            yield break;
+
+        bgVideoPlayer.Prepare();
+        while (!bgVideoPlayer.isPrepared)
+        {
+            yield return null;
+        }
+
+        bgVideoPlayer.Play();
+
+        if (bgVideoImage != null)
+            bgVideoImage.enabled = true;
     }
     #endregion
+    private IEnumerator VideoTransitionRoutine(VideoClip clip)
+    {
+        if (bgVideoImage == null)
+        {
+            IsVideoTransitioning = false;
+            yield break;
+        }
+
+        var originalColor = bgVideoImage.color;
+        // Fallback to visible color if original was clear/black
+        var fadeInColor = (originalColor.a < 0.99f && originalColor.r <= 0.01f && originalColor.g <= 0.01f && originalColor.b <= 0.01f)
+            ? Color.white
+            : new Color(originalColor.r, originalColor.g, originalColor.b, 1f);
+
+        // Fade to black on RawImage color
+        yield return FadeRawImageColor(bgVideoImage, Color.black, fadeDuration);
+        yield return new WaitForSeconds(2f);
+
+        if (clip == null)
+        {
+            StopBackgroundVideo();
+            IsVideoTransitioning = false;
+            yield break;
+        }
+
+        ConfigureVideoTarget(clip);
+        if (bgVideoImage != null)
+        {
+            // keep hidden while preparing
+            bgVideoImage.color = Color.black;
+        }
+
+        if (bgVideoCoroutine != null)
+        {
+            StopCoroutine(bgVideoCoroutine);
+            bgVideoCoroutine = null;
+        }
+        // Wait for prepare/play to finish before fading back in to avoid showing previous frame
+        yield return StartCoroutine(PrepareAndPlayVideo());
+
+        // Fade back from black to original color (alpha 1)
+        yield return FadeRawImageColor(bgVideoImage, fadeInColor, fadeDuration);
+        IsVideoTransitioning = false;
+    }
+
+
+    private IEnumerator FadeRawImageColor(RawImage img, Color target, float duration)
+    {
+        if (img == null) yield break;
+        var startColor = img.color;
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = duration > 0f ? t / duration : 1f;
+            img.color = Color.Lerp(startColor, target, lerp);
+            yield return null;
+        }
+        img.color = target;
+    }
+
+    private void ConfigureVideoTarget(VideoClip clip)
+    {
+        if (bgVideoTexture == null || bgVideoTexture.width != videoTextureSize.x || bgVideoTexture.height != videoTextureSize.y)
+        {
+            int w = videoTextureSize.x > 0 ? videoTextureSize.x : 1920;
+            int h = videoTextureSize.y > 0 ? videoTextureSize.y : 1080;
+            bgVideoTexture = new RenderTexture(w, h, 0);
+        }
+
+        bgVideoPlayer.renderMode = VideoRenderMode.RenderTexture;
+        bgVideoPlayer.targetTexture = bgVideoTexture;
+        bgVideoPlayer.clip = clip;
+        bgVideoPlayer.isLooping = true;
+        bgVideoPlayer.playOnAwake = false;
+        bgVideoPlayer.skipOnDrop = false;
+        bgVideoPlayer.audioOutputMode = VideoAudioOutputMode.None;
+        bgVideoPlayer.EnableAudioTrack(0, false);
+        bgVideoPlayer.controlledAudioTrackCount = 0;
+
+        bgVideoImage.texture = bgVideoTexture;
+        bgVideoImage.enabled = true;
+    }
+
+private IEnumerator FadeCanvasAlpha(CanvasGroup cg, float target, float duration)
+    {
+        if (cg == null)
+            yield break;
+
+        float start = cg.alpha;
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(start, target, duration > 0f ? t / duration : 1f);
+            yield return null;
+        }
+        cg.alpha = target;
+    }
+
+    private IEnumerator FadeImageAlpha(Image img, float target, float duration)
+    {
+        if (img == null) yield break;
+        var color = img.color;
+        float start = color.a;
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float a = Mathf.Lerp(start, target, duration > 0f ? t / duration : 1f);
+            img.color = new Color(color.r, color.g, color.b, a);
+            yield return null;
+        }
+        img.color = new Color(color.r, color.g, color.b, target);
+    }
 
     #region Portrait Methods
     /// <summary>
@@ -332,13 +512,24 @@ public class DialogueUI : MonoBehaviour
     #endregion
 
     #region Dialogue Text Methods
+    public void ShowDialoguePanel(bool visible, bool clearContent = true)
+    {
+        if (dialogueBox != null)
+            dialogueBox.SetActive(visible);
+        if (!visible && clearContent)
+        {
+            if (dialogueText != null) dialogueText.text = string.Empty;
+            if (continueIndicator != null) continueIndicator.SetActive(false);
+            if (nameTag != null) nameTag.text = string.Empty;
+        }
+    }
+
     public IEnumerator TypeText(string content)
     {
         if (dialogueText == null) yield break;
 
         isTyping = true;
         skipTyping = false;
-        CancelTypingSoundTailCountdown();
         dialogueText.text = "";
 
         if (continueIndicator != null) continueIndicator.SetActive(false);
@@ -352,15 +543,10 @@ public class DialogueUI : MonoBehaviour
             }
 
             dialogueText.text += c;
-            if (!char.IsWhiteSpace(c))
-            {
-                TryPlayTypeSound();
-            }
             yield return new WaitForSeconds(typeSpeed);
         }
 
         isTyping = false;
-        BeginTypingSoundTailCountdown();
         ShowContinueIndicator();
     }
 
@@ -606,10 +792,6 @@ public class DialogueUI : MonoBehaviour
             StopCoroutine(typingCoroutine);
         if (indicatorCoroutine != null)
             StopCoroutine(indicatorCoroutine);
-        if (typingSoundTailCoroutine != null)
-            StopCoroutine(typingSoundTailCoroutine);
-        if (typingAudioSource != null)
-            typingAudioSource.Stop();
     }
 
     private void ScrollHistoryToBottom()
@@ -680,40 +862,60 @@ public class DialogueUI : MonoBehaviour
 
         private void EnsureEventSystem()
         {
-            var existing = EventSystem.current ?? FindObjectOfType<EventSystem>();
+            // 1) If we already have one, just ensure the right input module.
+            var existing = EventSystem.current
+#if UNITY_2023_1_OR_NEWER
+                            ?? Object.FindFirstObjectByType<EventSystem>();
+#else
+                            ?? Object.FindObjectOfType<EventSystem>();
+#endif
             if (existing != null)
             {
-    #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-                var standalone = existing.GetComponent<StandaloneInputModule>();
-                if (standalone != null)
-                {
-                    Destroy(standalone);
-                }
-                if (existing.GetComponent<InputSystemUIInputModule>() == null)
-                {
-                    existing.gameObject.AddComponent<InputSystemUIInputModule>();
-                }
-    #else
-                var inputSystemModule = existing.GetComponent<InputSystemUIInputModule>();
-                if (inputSystemModule != null)
-                {
-                    Destroy(inputSystemModule);
-                }
-                if (existing.GetComponent<StandaloneInputModule>() == null)
-                {
-                    existing.gameObject.AddComponent<StandaloneInputModule>();
-                }
-    #endif
+                EnsureInputModule(existing);
+                CleanupExtraEventSystems(existing);
                 return;
             }
 
+            // 2) Create a scene-scoped EventSystem (do NOT DontDestroyOnLoad to avoid duplicates in gameplay scenes).
             var es = new GameObject("EventSystem", typeof(EventSystem));
-    #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-        es.AddComponent<InputSystemUIInputModule>();
-    #else
-        es.AddComponent<StandaloneInputModule>();
-    #endif
-        DontDestroyOnLoad(es);
+            EnsureInputModule(es.GetComponent<EventSystem>());
+        }
+
+        private void EnsureInputModule(EventSystem es)
+        {
+            if (es == null) return;
+#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+            var standalone = es.GetComponent<StandaloneInputModule>();
+            if (standalone != null)
+            {
+                Destroy(standalone);
+            }
+            if (es.GetComponent<InputSystemUIInputModule>() == null)
+            {
+                es.gameObject.AddComponent<InputSystemUIInputModule>();
+            }
+#else
+            var inputSystemModule = es.GetComponent<InputSystemUIInputModule>();
+            if (inputSystemModule != null)
+            {
+                Destroy(inputSystemModule);
+            }
+            if (es.GetComponent<StandaloneInputModule>() == null)
+            {
+                es.gameObject.AddComponent<StandaloneInputModule>();
+            }
+#endif
+        }
+
+        private void CleanupExtraEventSystems(EventSystem keep)
+        {
+            var all = FindObjectsOfType<EventSystem>();
+            foreach (var es in all)
+            {
+                if (es == null || es == keep) continue;
+                // If multiple found (e.g., dialogue carried over, plus gameplay scene), remove extras.
+                Destroy(es.gameObject);
+            }
         }
 
     private void EnsureAudioDefaults()
@@ -725,21 +927,9 @@ public class DialogueUI : MonoBehaviour
             uiAudioSource.loop = false;
         }
 
-        if (typingAudioSource == null)
-        {
-            typingAudioSource = gameObject.AddComponent<AudioSource>();
-            typingAudioSource.playOnAwake = false;
-            typingAudioSource.loop = false;
-        }
-
         if (clickSound == null)
         {
             clickSound = TryLoadBuiltinClip(new [] { "UI/MenuClick.wav", "UI/Sounds/MenuClick.wav", "Sounds/MenuClick.wav" });
-        }
-
-        if (typeSound == null)
-        {
-            typeSound = TryLoadBuiltinClip(new [] { "UI/MenuHighlight.wav", "UI/Sounds/MenuHighlight.wav", "Sounds/MenuHighlight.wav" });
         }
 
         if (hoverSound == null)
@@ -792,46 +982,56 @@ public class DialogueUI : MonoBehaviour
         }
     }
 
-    private void TryPlayTypeSound()
+    private void EnsureButtonHoverAndClickEffects(Button button)
     {
-        if (typingAudioSource == null || typeSound == null) return;
-        if (Time.time < nextTypeSoundTime) return;
-        nextTypeSoundTime = Time.time + typeSoundInterval;
-        typingAudioSource.PlayOneShot(typeSound, typeSoundVolume);
+        if (button == null) return;
+        var trigger = button.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+        AddTrigger(trigger, EventTriggerType.PointerEnter, _ =>
+        {
+            button.transform.localScale = Vector3.one * 1.05f;
+            PlayHoverSound();
+        });
+        AddTrigger(trigger, EventTriggerType.PointerExit, _ =>
+        {
+            button.transform.localScale = Vector3.one;
+        });
+        AddTrigger(trigger, EventTriggerType.PointerClick, _ =>
+        {
+            PlayClickSound();
+            StartCoroutine(ButtonClickPulse(button.transform));
+        });
     }
 
-    private void BeginTypingSoundTailCountdown()
+    private void AddTrigger(EventTrigger trigger, EventTriggerType type, System.Action<BaseEventData> action)
     {
-        if (typingAudioSource == null || !typingAudioSource.isPlaying)
-            return;
-
-        CancelTypingSoundTailCountdown();
-
-        if (typeSoundTailDelay <= 0f)
-        {
-            typingAudioSource.Stop();
-            return;
-        }
-
-        typingSoundTailCoroutine = StartCoroutine(StopTypingSoundAfterDelay());
+        var entry = new EventTrigger.Entry { eventID = type };
+        entry.callback.AddListener(new UnityEngine.Events.UnityAction<BaseEventData>(action));
+        trigger.triggers.Add(entry);
     }
 
-    private void CancelTypingSoundTailCountdown()
+    private IEnumerator ButtonClickPulse(Transform target)
     {
-        if (typingSoundTailCoroutine != null)
+        if (target == null) yield break;
+        Vector3 start = target.localScale;
+        Vector3 down = start * 0.92f;
+        float t = 0f;
+        const float downDuration = 0.08f;
+        while (t < downDuration)
         {
-            StopCoroutine(typingSoundTailCoroutine);
-            typingSoundTailCoroutine = null;
+            t += Time.unscaledDeltaTime;
+            target.localScale = Vector3.Lerp(start, down, t / downDuration);
+            yield return null;
         }
-    }
+        target.localScale = down;
 
-    private IEnumerator StopTypingSoundAfterDelay()
-    {
-        yield return new WaitForSeconds(typeSoundTailDelay);
-        if (typingAudioSource != null)
+        t = 0f;
+        const float upDuration = 0.12f;
+        while (t < upDuration)
         {
-            typingAudioSource.Stop();
+            t += Time.unscaledDeltaTime;
+            target.localScale = Vector3.Lerp(down, Vector3.one, t / upDuration);
+            yield return null;
         }
-        typingSoundTailCoroutine = null;
+        target.localScale = Vector3.one;
     }
 }

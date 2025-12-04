@@ -14,7 +14,6 @@ public static class WuxingHelper {
         float m=1f;
         if(user.innatePolarity==card.polarity){
             m*=1.1f;
-            if(user.innateElement==card.element) m*=1.1f;
         }
         if(IsKe(card.element,target.currentElement)) m*=1.2f;
         if(IsKe(target.currentElement,card.element)) m*=0.8f;

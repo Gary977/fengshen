@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: YinJin
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 8
-  cardSprite: {fileID: -6266214783646302326, guid: c5a49c02574cd184ebd91aa751b368df, type: 3}
+  cardSprite: {fileID: -4087377375887406748, guid: e7767a47ed8fa054e83a7426b50d3324, type: 3}
   cardName: Refine
   element: 3
   polarity: 0
   cost: 2
   type: 3
-  description: 'Choose 1 card in your hand; it costs 1 less energy this battle (minimum
-    0).
+  description: 'Refine
+
+    Choose 1 card in your hand; it costs 1 less energy this
+    battle (minimum 0).
 
     If the chosen card is Metal, it costs 2 less instead.'
   baseDamage: 0
@@ -33,3 +35,7 @@ MonoBehaviour:
   burnTurns: 0
   reducePerHit: 0
   hitCount: 0
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0
+  HpMultiplier: 0

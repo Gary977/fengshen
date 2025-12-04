@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: YinTu
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 6
-  cardSprite: {fileID: 4532370332454661765, guid: 5e54f93582cea8846b02a8d6ac5b9496, type: 3}
+  cardSprite: {fileID: 5616254913004763402, guid: c67fefed14009e94b9590c928a501c8f, type: 3}
   cardName: Earthen Seal
   element: 2
   polarity: 0
   cost: 2
   type: 1
-  description: "Apply Weak (1 turn), reducing enemy attack by 25%.\r\nReduce the
-    target\u2019s Block by 5."
+  description: "Earthen Seal\nApply Weak (1 turn), reducing enemy attack by 25%.\r\nReduce
+    the target\u2019s Block by 5."
   baseDamage: 0
   bonusDamage: 0
   elementBonus: 0.25
@@ -34,3 +34,4 @@ MonoBehaviour:
   wetTurns: 0
   weakTurns: 1
   vulnerableTurns: 0
+  HpMultiplier: 0

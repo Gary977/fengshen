@@ -13,16 +13,18 @@ MonoBehaviour:
   m_Name: YinMu
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 2
-  cardSprite: {fileID: -4279201844541108399, guid: ccd7a3f655763934e80cc6940d635675, type: 3}
+  cardSprite: {fileID: 720801503551729043, guid: 57335c8d2e517744e963384a2aacfcce, type: 3}
   cardName: Spirit Mend
   element: 0
   polarity: 0
   cost: 2
   type: 2
-  description: 'Restore 5 HP.
+  description: 'Spirit Mend
 
-    If you have any debuffs, remove one and increase
-    healing by +100%.'
+    Restore 5 HP.
+
+    If you have any debuffs, remove
+    one and increase healing by +100%.'
   baseDamage: 0
   bonusDamage: 0
   elementBonus: 0.25

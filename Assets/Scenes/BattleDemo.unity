@@ -2136,8 +2136,8 @@ Canvas:
   m_GameObject: {fileID: 951176525}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 1
+  m_Camera: {fileID: 1412416816}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -2318,8 +2318,8 @@ Canvas:
   m_GameObject: {fileID: 992737337}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 1
+  m_Camera: {fileID: 1412416816}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -3264,6 +3264,8 @@ MonoBehaviour:
   enemyBlockText: {fileID: 56467506}
   playerEnergyText: {fileID: 1316503374}
   enemyEnergyText: {fileID: 0}
+  playerStatusText: {fileID: 0}
+  enemyStatusText: {fileID: 0}
 --- !u!1 &1772001492
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: YinShui
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 10
-  cardSprite: {fileID: 8262561224435061073, guid: 0cb453e7c851f484ab588ff0e90392a1, type: 3}
+  cardSprite: {fileID: 2292526792846232288, guid: 5d1f2c33bd406084e99ebf510ff15ed1, type: 3}
   cardName: Flowing Veil
   element: 4
   polarity: 0
   cost: 1
   type: 1
-  description: Reduce the next 2 instances of incoming damage by 4 each (this turn
-    only).
+  description: 'Flowing Veil
+
+    Reduce the next 2 instances of incoming damage
+    by 4 each (this turn only).'
   baseDamage: 0
   bonusDamage: 0
   elementBonus: 0.25
@@ -31,3 +33,7 @@ MonoBehaviour:
   burnTurns: 0
   reducePerHit: 4
   hitCount: 2
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0
+  HpMultiplier: 0

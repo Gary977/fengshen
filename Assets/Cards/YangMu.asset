@@ -13,18 +13,20 @@ MonoBehaviour:
   m_Name: YangMu
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 1
-  cardSprite: {fileID: 4529587877504667129, guid: 2ab8d4660cb0645449dda99316697bb4, type: 3}
+  cardSprite: {fileID: 5120940934649208145, guid: 5fa1a03665af60f47ac5a6f7b2d3e323, type: 3}
   cardName: Vine Surge
   element: 0
   polarity: 1
   cost: 2
-  type: 6
-  description: 'Deal 12 damage.
+  type: 0
+  description: 'Vine Surge
+
+    Deal 12 damage.
 
     Apply Vulnerable (1 turn).
 
-    If you currently
-    have Block, deal +6 additional damage.'
+    If
+    you currently have Block, deal +6 additional damage.'
   baseDamage: 12
   bonusDamage: 6
   elementBonus: 0.25
@@ -38,3 +40,4 @@ MonoBehaviour:
   wetTurns: 0
   weakTurns: 0
   vulnerableTurns: 1
+  HpMultiplier: 0

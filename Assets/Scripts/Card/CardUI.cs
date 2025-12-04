@@ -10,13 +10,12 @@ public class CardUI : MonoBehaviour,
     IDragHandler
 {
     public CardInstance instance;
+    private Combatant owner;
     public Transform handArea;
     private Transform originalParent;
     private int originalIndex;
-    // 外层由 HandCurveLayout 控制位置
     private RectTransform outer;
 
-    // 内层是我们真正动的部分（缩放、抬高、旋转）
     public RectTransform visual;
 
     public CanvasGroup canvasGroup;
@@ -24,6 +23,8 @@ public class CardUI : MonoBehaviour,
     // Ghost
     public GameObject ghostPrefab;
     private GameObject ghost;
+    private bool indexCaptured = false;
+    private bool hoverRaised = false;
 
     // Hover animation
     public float hoverScale = 1.12f;
@@ -45,9 +46,10 @@ public class CardUI : MonoBehaviour,
     [Header("UI References")]
     public Image cardArt;
     public TextMeshProUGUI cardName;
-    public TextMeshProUGUI cardCost;
-    public TextMeshProUGUI cardPolarity;
     public static Transform hoverCanvas;
+
+    [Header("Visual Feedback")]
+    [SerializeField] private CardShadowPulse shadowPulse;
 
     void Awake()
     {
@@ -55,6 +57,8 @@ public class CardUI : MonoBehaviour,
         visualBasePos = Vector3.zero;
         visualTargetPos = visualBasePos;
         handArea = GameObject.Find("HandArea").transform;
+
+        EnsureShadowPulse();
 
         visualBaseScale = visual.localScale;
         visualTargetScale = visualBaseScale;
@@ -68,6 +72,8 @@ public class CardUI : MonoBehaviour,
 
         visual.localPosition =
             Vector3.Lerp(visual.localPosition, visualTargetPos, Time.deltaTime * smooth);
+
+        UpdateElementalGlow();
     }
 
 
@@ -78,14 +84,18 @@ public class CardUI : MonoBehaviour,
 
         isHover = true;
 
+        if (!indexCaptured)
+        {
+            originalIndex = transform.GetSiblingIndex();
+            indexCaptured = true;
+        }
+        transform.SetAsLastSibling();
+        hoverRaised = true;
+
         visualTargetScale = visualBaseScale * hoverScale;
         visualTargetPos = new Vector3(0, hoverLift, 0);
-        transform.SetSiblingIndex(999);
-        // [新增] 呼叫 Tooltip 显示
-        // 假设你的 definition 里有一个叫 description 的 string 字段
         string desc = instance.definition.description;
 
-        // 传入当前卡牌的位置 (transform.position)
         if (CardTooltip.Instance != null)
         {
             CardTooltip.Instance.ShowTooltip(desc, GetComponent<RectTransform>());
@@ -95,25 +105,27 @@ public class CardUI : MonoBehaviour,
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        // [新增] 隐藏
         if (CardTooltip.Instance != null)
         {
             CardTooltip.Instance.HideTooltip();
         }
         if (!isDrag && !globalDragging)
-
-            if (!isDrag)
         {
+            if (hoverRaised && indexCaptured)
+            {
+                transform.SetSiblingIndex(originalIndex);
+                hoverRaised = false;
+            }
             visualTargetScale = visualBaseScale;
             visualTargetPos = Vector3.zero;
         }
+        isHover = false;
     }
 
 
     // ---------------- DRAG ----------------
     public void OnPointerDown(PointerEventData eventData)
     {
-        // [新增] 开始拖拽时，强制关闭描述框（否则拖着牌还有个框跟着很奇怪）
         if (CardTooltip.Instance != null)
         {
             CardTooltip.Instance.HideTooltip();
@@ -122,14 +134,18 @@ public class CardUI : MonoBehaviour,
         globalDragging = true;
 
         originalParent = transform.parent;
-        originalIndex = transform.GetSiblingIndex();
+        if (!indexCaptured)
+        {
+            originalIndex = transform.GetSiblingIndex();
+            indexCaptured = true;
+        }
+        // Bring to front visually while dragging
+        transform.SetAsLastSibling();
 
-        // ★ Ghost 放在 HandArea，而不是 Canvas
         ghost = Instantiate(ghostPrefab, handArea);
-        ghost.transform.position = eventData.position;
+        UpdateGhostPosition(eventData);
         ghost.GetComponent<GhostCard>().Setup(instance.definition);
 
-        // ★ 同步 RectTransform
         var ghostRect = ghost.GetComponent<RectTransform>();
         var cardRect = GetComponent<RectTransform>();
 
@@ -142,15 +158,13 @@ public class CardUI : MonoBehaviour,
             ghostRect.anchorMax = cardRect.anchorMax;
         }
         Debug.Log("HAND AREA = " + handArea);
-        // 隐藏真实卡牌
         canvasGroup.alpha = 0f;
     }
 
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (ghost != null)
-            ghost.transform.position = eventData.position;
+        UpdateGhostPosition(eventData);
     }
 
     public void OnPointerUp(PointerEventData eventData)
@@ -163,35 +177,95 @@ public class CardUI : MonoBehaviour,
 
         canvasGroup.alpha = 1f;
 
-        // 不再手动判断 DropZone
-        // DropZone 会在 OnDrop() 自动处理
-
-        // 恢复 hover 或原位置
-        if (isHover)
-        {
-            visualTargetScale = visualBaseScale * hoverScale;
-            visualTargetPos = new Vector3(0, hoverLift, 0);
-        }
-        else
-        {
-            visualTargetScale = visualBaseScale;
-            visualTargetPos = Vector3.zero;
-        }
+        // Always reset hover visuals on release
+        visualTargetScale = visualBaseScale;
+        visualTargetPos = Vector3.zero;
 
         transform.SetParent(originalParent);
-        transform.SetSiblingIndex(originalIndex);
+        if (indexCaptured)
+        {
+            transform.SetSiblingIndex(originalIndex);
+        }
+        indexCaptured = false;
+        hoverRaised = false;
+        isHover = false;
 
         if (handArea != null)
             handArea.GetComponent<HandCurveLayout>().RefreshLayout();
     }
 
-    public void Init(CardInstance inst)
+    private void UpdateElementalGlow()
+    {
+        if (shadowPulse == null || instance == null || instance.definition == null) return;
+
+        var bm = BattleManager.Instance;
+        if (bm == null) return;
+
+        // Only offensive cards get glow (Attack / AttackDebuff); others keep their original shadow.
+        var type = instance.definition.type;
+        bool isOffensive = (type == CardType.Attack || type == CardType.AttackDebuff);
+        if (!isOffensive)
+        {
+            shadowPulse.Clear();
+            return;
+        }
+
+        Combatant target = null;
+        if (owner == bm.Player) target = bm.Enemy;
+        else if (owner == bm.Enemy) target = bm.Player;
+        else target = bm.Enemy;
+
+        if (target == null) return;
+
+        bool advantaged = WuxingHelper.IsKe(instance.definition.element, target.currentElement);
+        bool disadvantaged = WuxingHelper.IsKe(target.currentElement, instance.definition.element);
+
+        if (advantaged && !disadvantaged) shadowPulse.SetStrong();
+        else if (disadvantaged && !advantaged) shadowPulse.SetWeak();
+        else shadowPulse.Clear();
+    }
+
+    private void EnsureShadowPulse()
+    {
+        if (shadowPulse != null) return;
+        shadowPulse = GetComponent<CardShadowPulse>() ?? GetComponentInChildren<CardShadowPulse>(true);
+        if (shadowPulse == null && visual != null)
+        {
+            shadowPulse = visual.GetComponent<CardShadowPulse>() ?? visual.gameObject.AddComponent<CardShadowPulse>();
+        }
+        if (shadowPulse == null && cardArt != null)
+        {
+            shadowPulse = cardArt.GetComponent<CardShadowPulse>() ?? cardArt.gameObject.AddComponent<CardShadowPulse>();
+        }
+    }
+
+    private void UpdateGhostPosition(PointerEventData eventData)
+    {
+        if (ghost == null || handArea == null) return;
+        var handRect = handArea as RectTransform;
+        var ghostRect = ghost.GetComponent<RectTransform>();
+        if (handRect == null || ghostRect == null) return;
+
+        Vector2 localPoint;
+        var cam = eventData.pressEventCamera;
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(handRect, eventData.position, cam, out localPoint))
+        {
+            ghostRect.anchoredPosition = localPoint;
+        }
+        else
+        {
+            // Fallback to world position so it stays visible even if conversion fails
+            ghost.transform.position = eventData.position;
+        }
+    }
+
+    public void Init(CardInstance inst, Combatant ownerCombatant = null)
     {
         instance = inst;
+        owner = ownerCombatant;
 
         cardArt.sprite = inst.definition.cardSprite;
-        cardName.text = inst.definition.cardName;
-        cardCost.text = inst.definition.cost.ToString();
-        cardPolarity.text = inst.definition.polarity.ToString(); // Yin / Yang
+
+
     }
 }

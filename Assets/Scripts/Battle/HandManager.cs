@@ -38,7 +38,7 @@ public class HandManager : MonoBehaviour
 
                 if (ui != null)
                 {
-                    ui.Init(inst);
+                    ui.Init(inst, owner);
                     handArea.GetComponent<HandCurveLayout>().RefreshLayout();
                     ui.handArea = handArea;   // 注入 HandArea
                 }

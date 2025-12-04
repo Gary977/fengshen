@@ -13,15 +13,18 @@ MonoBehaviour:
   m_Name: YangHuo
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 3
-  cardSprite: {fileID: -6796452293587100391, guid: 3049ce20bdbd9a74db2c357bfa6627ea, type: 3}
+  cardSprite: {fileID: 7142518519572273488, guid: 292b91ba4b0fbe74b81a59fe726d1cdb, type: 3}
   cardName: Heartflame Slash
   element: 1
   polarity: 1
   cost: 1
   type: 0
-  description: 'Deal 5 damage.
+  description: 'Heartflame Slash
 
-    If the target is Wet, deal +3 additional damage.'
+    Deal 5 damage.
+
+    If the target is Wet, deal
+    +3 additional damage.'
   baseDamage: 5
   bonusDamage: 3
   elementBonus: 0.25
@@ -32,3 +35,7 @@ MonoBehaviour:
   burnTurns: 0
   reducePerHit: 0
   hitCount: 0
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0
+  HpMultiplier: 0

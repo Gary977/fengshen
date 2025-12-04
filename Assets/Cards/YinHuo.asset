@@ -13,13 +13,15 @@ MonoBehaviour:
   m_Name: YinHuo
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   id: 4
-  cardSprite: {fileID: -347405832910566999, guid: b9366d21f6f8d604ab03452bebf33d5d, type: 3}
+  cardSprite: {fileID: -6379982804546595101, guid: 00d516c074124824781f99006c757e2c, type: 3}
   cardName: Scorch Mark
   element: 1
   polarity: 0
   cost: 3
-  type: 6
-  description: 'Deal 10 damage.
+  type: 0
+  description: 'Scorch Mark
+
+    Deal 10 damage.
 
     Apply Burn (2 turns, -5 HP/turn).
 
@@ -34,3 +36,7 @@ MonoBehaviour:
   burnTurns: 2
   reducePerHit: 0
   hitCount: 0
+  wetTurns: 0
+  weakTurns: 0
+  vulnerableTurns: 0
+  HpMultiplier: 0

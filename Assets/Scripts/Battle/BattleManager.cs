@@ -31,6 +31,9 @@ public class BattleManager : MonoBehaviour
     private int pEnergy, eEnergy;
     private int pReserve = 0, eReserve = 0;
 
+    public Combatant Player => player;
+    public Combatant Enemy => enemy;
+
     private void Awake()
     {
         Instance = this;
